@@ -1,0 +1,81 @@
+<html>
+	<head>
+		<link href="objectBuilder.css" rel="stylesheet" type="text/css" />
+		<script language="JavaScript" type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+		<script language="JavaScript" type="text/javascript" src="core.js"></script>
+		<script language="JavaScript" type="text/javascript" src="objectBuilder.js"></script>
+		<script language="JavaScript" type="text/javascript"> 
+			$(document).ready(function(){$(document).mousemove(Mouse.move);})
+		</script>
+	</head>
+	<body>
+		<script language="JavaScript" type="text/javascript">
+			document.body.appendChild(input = document.createElement('textarea'));
+			input.style.width = '100%';
+			input.style.height = '300px';
+			document.body.appendChild(div = document.createElement('div'));
+			elements = {
+				value: {
+					className: 'value',
+					elements: [
+						{
+							label: 'Value',
+							value: '',
+							editable: true,                                                                            
+						}
+					] 
+				},  
+				// TODO Change to function                                                                       
+				function: {                                                                                      
+					label: 'Functions',                                                                            
+					className: 'functions',                                                                        
+					elements: [                                                                                    
+						{
+							label: 'CONCAT',
+							value: 'CONCAT',                                                                           
+							objects: [                                                                                 
+								{
+									type: ['functions', 'value', 'field'],                                                 
+									many: true                                                                             
+								},                                                                                       
+							]
+						},
+					] 
+				},                                                                                               
+				field: {                                                                                         
+					label: 'Fields',
+					className: 'fields',                                                                           
+					elements: [
+						{
+							label: 'field1',
+							value: 'field1',                                                                           
+						},
+						{
+							label: 'field2',
+							value: 'field2',                                                                           
+						},
+						{
+							label: 'field3',
+							value: 'field3',                                                                           
+						},
+						{
+							label: 'field4',
+							value: 'field4',                                                                           
+						},
+						{
+							label: 'field5',
+							value: 'field5',                                                                           
+						},
+					],                                                                                  
+				},
+				operator: {
+					label: 'Operators',
+					className: 'operators',                                                                        
+					elements: []
+				},                                                                                               
+			};
+
+			blah = new ObjectBuilder(div, input, elements, false, true);
+		</script>
+	</body>
+</html>
