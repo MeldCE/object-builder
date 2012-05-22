@@ -1,0 +1,50 @@
+div.pad, div.placer {
+	text-align: left;
+	border:solid 1px #000;
+	margin: 1px 2px;
+	min-width: 30px;
+	min-height: 15px;
+	white-space: nowrap;
+}
+
+div.pad {
+	min-width: 200px;
+}
+
+div.placer {
+	display: inline-block;
+}
+
+div.title {
+	font-weight: bold;
+	font-size: 12px;
+}
+
+div.store {
+	padding: 5px;
+	z-index: 100;
+	position: absolute;
+	border:solid 1px #000;
+	background-color: #fff;
+	max-width: 50%;
+}
+
+div.element {
+	text-align: center;
+	vertical-align: middle;
+	display: inline-block;
+	border:solid 1px #000;
+	margin: 1px 2px;
+	min-width: 30px;
+	min-height: 15px;
+}
+
+div.element div.label {
+	display: inline-block;
+	padding: 1px 3px;
+}
+
+div.element.object {
+	background-color: #fff;
+}
+
