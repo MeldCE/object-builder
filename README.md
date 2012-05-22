@@ -5,6 +5,8 @@ Javascript to build an object from given elements using a GUI
 
 This is an initial test version that isn't quite complete, but I have uploaded for anyone wondering what this is about. The main object, ObjectBuilder, is defined below.
 
+*Note: This script currently requires JQuery and an additional core.js script to work*
+
 Please send any feedback to github@theweldstudio.com
 
 ObjectBuilder(div, input, elements, initial, full)

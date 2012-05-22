@@ -110,7 +110,7 @@ function ObjectBuilder(div, input, elements, initial, full) {
 ObjectBuilder.prototype = {
 	_create: function() {
 		div.appendChild(this.pad = document.createElement('div'));
-		this.pad.setAttribute('data-value', 'pad');
+		this.pad.setAttribute('data-builder', 1);
 		this.pad.className = 'pad';
 		this.pad.innerHTML = '';
 

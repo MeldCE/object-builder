@@ -48,3 +48,18 @@ div.element.object {
 	background-color: #fff;
 }
 
+div.element.functions {
+  background-color: #eef;
+}
+
+div.element.value {
+	background-color: #ffe;
+}
+
+div.element.fields{
+	background-color: #efe;
+}
+
+div.element.operators {
+	background-color: #eff;
+}
