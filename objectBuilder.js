@@ -5,8 +5,8 @@
 // Created By: The Weld Studio (http://www.theweldstudio.com)
 // Created: 22 May 2012
 //
-// Version: 0.5
-// Last Updated: 22 May 2012
+// Version: 0.6
+// Last Updated: 2 June 2012
 //
 //
 // This work is licenced under a Creative Commons 
@@ -52,42 +52,51 @@
 // ObjectBuilder(div, input, elements, initial, full)
 //   div      - The div that the Object Builder will be placed in
 //   input    - Input element to place the parsed object
-//   elements - An object containing the elements available. This should the
+//   config   - An object containing the elements available. This should the
 //               parameters as given below
 //   initial  - Initial object. Will be used to populate the pad on rebuild
 //   full     - If set, the possible elements will be always shown
 //
-// elements must be structured in the following way
-// elements = {
-//   <elementType>: { 
-//     label: <label>, // This label will be displayed above the group
-//                     //  of elements
-//     className: <class>, // The CSS class to use for this element
-//     elements: [ // The array containing the elements of this type
-//       {
-//         label: <label>, // Will be shown on the element
-//         value: <value>, // Will be the value in the parsed object
-//         editable: true | false, // If true, the user will be able to change
-//                                 //  the value of the element
-//         objects: [ // Set if the element should be able to have elements
-//                    //  inside of it
-//           {
-//             type: [<elementType>, ...], // A list of the elements that can
-//                                         //  be placed inside this element
-//             many: true // Set to allow multiple elements to be placed
-//                        //  placed inside this element
-//           },
-//           ...
-//         ]
-//       },
+// config must be structured in the following way
+// config = {
+//   type: [<elementType>, ...], // A list of the elements that can be placed
+//                               // inside the base element
+//   elements: {
+//     <elementType>: { 
+//       label: <label>, // This label will be displayed above the group
+//                       //  of elements. This can contain % TODO
+//       className: <class>, // The CSS class to use for this element
+//       elements: [ // The array containing the elements of this type
+//         {
+//           label: <label>, // Will be shown on the element
+//           value: <value>, // Will be the value in the parsed object
+//           editable: true | false, // If true, the user will be able to change
+//                                   //  the value of the element
+//           builder: <functionRef>, // Function to be called to generate the
+//                                   // the contents of the element. The
+//                                   // function should the following arguments.
+//                                   //  <obj> - the element DOM object
+//                                   //  <el>  - this element object
+//           objects: [ // Set if the element should be able to have elements
+//                      //  inside of it
+//             {
+//               type: [<elementType>, ...], // A list of the elements that can
+//                                           //  be placed inside this element
+//               many: true // Set to allow multiple elements to be placed
+//                          //  placed inside this element
+//             },
+//             ...
+//           ]
+//         },
+//         ...
+//       ],
 //       ...
-//     ],
+//     },
 //     ...
-//   },
-//   ...
+//   }
 // }
 //
-function ObjectBuilder(div, input, elements, initial, full) {
+function ObjectBuilder(div, input, config, initial, full) {
 	this.div = div;
 	this.input = input;
 	if (full) {
@@ -98,11 +107,11 @@ function ObjectBuilder(div, input, elements, initial, full) {
 	if (div) {
 		this._create();
 
-		if (elements) {
+		if (config) {
 			if (!initial) {
 				initial = false;
 			}
-			this.rebuild(elements, initial);
+			this.rebuild(config, initial);
 		}
 	}
 }
@@ -110,7 +119,6 @@ function ObjectBuilder(div, input, elements, initial, full) {
 ObjectBuilder.prototype = {
 	_create: function() {
 		div.appendChild(this.pad = document.createElement('div'));
-		this.pad.setAttribute('data-builder', 1);
 		this.pad.className = 'pad';
 		this.pad.innerHTML = '';
 
@@ -124,81 +132,188 @@ ObjectBuilder.prototype = {
 		div.appendChild(this.store);
 	},
 
-	rebuild: function(elements) {
+	showHide: function(element) {
+		if (element.eStore.style.display == 'none') {
+			element.eStore.style.display = '';
+			showHide.innerHTML = 'Hide';
+		} else {
+			showHide.innerHTML = 'Show';
+			element.eStore.style.display = 'none';
+		}
+	},
+
+	rebuild: function(config, value) {
 		try {
+			this.config = config;
+
 			// Delete any current objects
 			this.pad.innerHTML = '';
 			this.store.innerHTML = '';
 
-			var e;
+			if (config.type) {
+				this.pad.setAttribute('data-limit-types', config.type);
+			}
 
+			var e;
+			var elements = config.elements;
 			for (e in elements) {
 				var className = false;
 				if (elements[e].className) {
 					className = elements[e].className;
 				}
 				if (elements[e].label) {
-					this.store.appendChild(title = document.createElement('div'));
-					title.innerHTML = elements[e].label;
-					title.className = 'title';
+					this.store.appendChild(elements[e].title = document.createElement('div'));
+					elements[e].title.innerHTML = elements[e].label;
+					elements[e].title.className = 'title';
 				}
 
 				if (elements[e].elements) {
 					var items = elements[e].elements;
 					this.store.appendChild(eStore = document.createElement('div'));
 					eStore.className = 'elementStore';
+					elements[e].eStore = eStore;
 					var i;
 					for (i in items) {
 						var item;
 						
 						eStore.appendChild(item = this._createItem(className));
+						items[i].item = item;
 						item.setAttribute('data-type', e);
-						if (items[i].label) {
-							item.appendChild(label = document.createElement('div'));
-							label.className = 'label';
-							label.innerHTML = items[i].label;
-						}
+
 						if (items[i].value) {
 							item.setAttribute('data-value', items[i].value);
 						}
 						if (items[i].editable) {
 							item.setAttribute('data-editable', 1);
 						}
-						if (items[i].objects) {
-							item.setAttribute('data-has-objects', 1);
+						if (items[i].builder) {
+							items[i].builder(item, items[i]);
+						} else {
+							if (items[i].objects) {
+								item.setAttribute('data-has-objects', 1);
+								
+								var label = items[i].label;
+								var positions = [];
+								var found = {};
+								var divs = { null: [] };
+								var x;
+								var leftoverSpace = false;
+								var objects = items[i].objects;
+		
+								for (o in objects) {
+									// Create object
+									var object = this._createItem('object');
+									object.innerHTML = '';
+									object.setAttribute('data-has-objects', 1);
 
-							item.appendChild(label = document.createElement('div'));
-							label.className = 'label';
-							label.innerHTML = '(';
-							
-							var first = true;
-							var objects = items[i].objects, object;
-							for (o in objects) {
-								if (!first) {
+									if (objects[o].type) {
+										object.setAttribute('data-limit-types', objects[o].type);
+									}
+
+									if (objects[o].many) {
+										object.setAttribute('data-many', 1);
+									}
+									
+									if((x = label.indexOf('%{' + o + '}')) != -1) {
+										positions.push(x);
+										found[x] = o;
+										divs[x] = {name: o, object: object};
+									} else {
+										divs[null].push(object);
+									}
+								}
+
+								if((x = label.indexOf('%{}')) != -1) {
+									leftoverSpace = true;
+									positions.push(x);
+									divs[x] = {name: ''};
+								}
+
+								positions.sort(function(a,b){return a-b});
+								var p;
+								for (p in positions) {
+									label = label.split('%{' + divs[positions[p]]['name'] + '}');
+								
+									item.appendChild(labelDiv = document.createElement('div'));
+									labelDiv.className = 'label';
+									labelDiv.innerHTML = label[0];
+									if (label.length > 2) {
+										label.shift();
+										label = label.join('%{' + divs[positions[p]]['name'] + '}');
+									} else {
+										label = label[1];
+									}
+									
+									if (!divs[positions[p]]['object']) {
+										for (o in divs[null]) {
+											item.appendChild(divs[null][o]);
+										}
+									} else {
+										item.appendChild(divs[positions[p]]['object']);
+									}
+								}
+
+								if (label) {
+									item.appendChild(labelDiv = document.createElement('div'));
+									labelDiv.className = 'label';
+									labelDiv.innerHTML = label;
+								}
+		
+								if (!leftoverSpace && divs[null].length) {
 									item.appendChild(label = document.createElement('div'));
 									label.className = 'label';
-									label.innerHTML = ', ';
-								}
-								item.appendChild(object = this._createItem('object'));
-								object.innerHTML = '';
-								object.setAttribute('data-has-objects', 1);
-								if (objects[o].many) {
-									object.setAttribute('data-many', 1);
-								}
-								first = false;
-							}
+									label.innerHTML = '(';
+									
+									for (o in divs[null]) {
+										item.appendChild(divs[null][o]);
+									}
+									
+									item.appendChild(label = document.createElement('div'));
+									label.className = 'label';
+									label.innerHTML = ')';
 
-							item.appendChild(label = document.createElement('div'));
-							label.className = 'label';
-							label.innerHTML = ')';
+								}
+							} else if (items[i].label) {
+								item.appendChild(label = document.createElement('div'));
+								label.className = 'label';
+								label.innerHTML = items[i].label;
+							}
 						}
+					}
+				}
+				
+				if (elements[e].label) {
+					var _this = this;
+
+					elements[e].title.appendChild(showHide = document.createElement('a'));
+					showHide.innerHTML = '';
+					showHide.style.marginLeft = '10px';
+					showHide.onclick = (function(a) { return function() { _this.showHide(a); }})(elements[e]);
+					if (elements[e].hide) {
+						elements[e].eStore.style.display = 'none'
+						showHide.innerHTML = 'Show';
+					} else {
+						showHide.innerHTML = 'Hide';
 					}
 				}
 			}
 
 			this.current = [];
+
+			if (value) {
+				this._rebuildPad();
+			}
 		} catch(e) {
 		
+		}
+	},
+
+	_rebuildPad: function(value) {
+		try {
+			value = unserialize(value);
+
+
+		} catch(e) {
 		}
 	},
 
@@ -273,12 +388,20 @@ ObjectBuilder.prototype = {
 	},
 
 	_findPropRecurse: function (proposed) {
-		var single = !proposed.hasAttribute('data-many');
 		var n = proposed.childNodes, i;
 		var before = false;
 		var current = false;
+		var validProposal = true;
 		var x = 0;
 
+		if (proposed.hasAttribute('data-limit-types')) {
+			var types = proposed.getAttribute('data-limit-types').split(',');
+			if (types.indexOf(this.drag.getAttribute('data-type')) == -1 || types.indexOf(this.drag.getAttribute('data-type') + '!' + this.drag.getAttribute('data-value')) != -1) {
+				validProposal = false;
+			}
+		}
+
+		// Go through objects elements finding all positions
 		for (i = 0; i < n.length; i++) {
 			if (this.proposed && n[i] == this.proposed) {
 				current = true;
@@ -286,9 +409,17 @@ ObjectBuilder.prototype = {
 			}
 	
 			if (n[i].hasAttribute('data-builder')) {
-
 				if (n[i].hasAttribute('data-has-objects')) {
-					if (Mouse.isInXRange(n[i])) {
+					var fine = true;
+					if (n[i].hasAttribute('data-limit-types')) {
+						var types = n[i].getAttribute('data-limit-types').split(',');
+						if (types.indexOf(this.drag.getAttribute('data-type')) == -1 || types.indexOf(this.drag.getAttribute('data-type') + '!' + this.drag.getAttribute('data-value')) != -1) {
+							fine = false;
+						}
+					}
+
+					// FIXME having this set to just inside means that it doesn't play nice when one object is removed. Need to fix.
+					if (fine && Mouse.isInXRange(n[i])) {
 						var newPropose = this._findPropRecurse(n[i]);
 						if (newPropose) {
 							return newPropose;
@@ -302,7 +433,7 @@ ObjectBuilder.prototype = {
 					x = $(n[i]).offset().left + (n[i].clientWidth / 2);
 				}
 
-				if (single) {
+				if (!proposed.hasAttribute('data-value') && !proposed.hasAttribute('data-many')) {
 					return false;
 				}
 
@@ -319,8 +450,7 @@ ObjectBuilder.prototype = {
 			current = false;
 		}
 
-		// TODO
-		if (!proposed.hasAttribute('data-function')) {
+		if (validProposal && !proposed.hasAttribute('data-value')) {
 			if (current) {
 				return true;
 			} else {
@@ -459,6 +589,7 @@ ObjectBuilder.prototype = {
 					this.input.value = serialize(this._parse());
 				}
 			}
+			window.getSelection().removeAllRanges()
 		}
 
 		return false;
