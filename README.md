@@ -9,15 +9,17 @@ This is an initial test version that isn't quite complete, but I have uploaded f
 
 Please send any feedback to github@theweldstudio.com
 
-ObjectBuilder(div, input, elements, initial, full)
-   div      - The div that the Object Builder will be placed in
-   input    - Input element to place the parsed object
-   elements - An object containing the elements available. This should the
+To initiate, simply call `ObjectBuilder(div, input, elements, initial, full)`
+- `div`      - The div that the Object Builder will be placed in
+- `input`    - Input element to place the parsed object
+- `elements` - An object containing the elements available. This should the
                parameters as given below
-   initial  - Initial object. Will be used to populate the pad on rebuild
-   full     - If set, the possible elements will be always shown
+- `initial`  - Initial object. Will be used to populate the pad on rebuild
+- `full`     - If set, the possible elements will be always shown
 
 Elements must be structured in the following way
+
+```
  elements = {
    <elementType>: { 
      label: <label>, // This label will be displayed above the group
@@ -46,4 +48,4 @@ Elements must be structured in the following way
    },
    ...
  }
-
+```
