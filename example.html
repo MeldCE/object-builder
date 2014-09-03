@@ -1,0 +1,120 @@
+<html>
+	<head>
+		<link href="objectBuilder.css" rel="stylesheet" type="text/css" />
+		<script type='text/javascript' src='jquery-2.0.2.js'></script>
+
+	  <script type="text/javascript" src="jquery-ui.js"></script>
+	  <link rel="stylesheet" type="text/css" href="jquery-ui.css">
+		<script language="JavaScript" type="text/javascript" src="objectBuilder.js"></script>
+		<script language="JavaScript" type="text/javascript"> 
+			//$(document).ready(function(){$(document).mousemove(Mouse.move);})
+		</script>
+	</head>
+	<body>
+		<script language="JavaScript" type="text/javascript">
+			(function() {
+				var input, div, elements;
+				$('body').append((input = $(document.createElement('textarea'))));
+				input.height('100px');
+				input.width('100%');
+				$('body').append((div = $(document.createElement('div'))));
+
+				var repeats = {
+					day: { ly: 'Daily', ls: 'day(s)' },
+					week: { ly: 'Weekly', ls: 'week(s)' },
+					month: { ly: 'Monthly', ls: 'month(s)' },
+					year: { ly: 'Yearly', ls: 'year(s)' },
+				};
+
+				var times = {
+					at: { l: 'At'},
+					on: { l: 'On'},
+					day: { l: 'On the'},
+					days: { l: 'Between the (inclusive)'},
+				};
+
+				function repeat(obj) {
+					var z, y, i, data = {}, type;
+					obj.html('Repeat ');
+					obj.append(data['type'] = $(document.createElement('select')));
+					for (i in repeats) {
+						if (!type) type = i;
+						data['type'].append(y = $(document.createElement('option')));
+						y.html(repeats[i]['ly']);
+						y.val(repeats[i]);
+					}
+					//data['type'].change(
+					obj.append(' every ');
+					obj.append(data['freq'] = $(document.createElement('input')));
+					obj.append(data['freqLabel'] = $(document.createElement('span')));
+					data['freqLabel'].html(repeats[type]['ls']);
+					//obj.append(' until ');
+					//obj.append(data['untilPlace'] = $(document.createElement('span')));
+					//data['untilPlace'].append(repeats[type]['until']);
+
+					// Add pad
+					obj.append((z = $(document.createElement('div'))));
+					z.addClass('pad');
+
+					return [z];
+				}
+
+				function time(obj) {
+					var z, y, i, data = {}, type;
+
+					obj.html('');
+					obj.append(data['type'] = $(document.createElement('select')));
+					for (i in times) {
+						if (!type) type = i;
+						data['type'].append(y = $(document.createElement('option')));
+						y.html(times[i]['l']);
+						y.val(times[i]);
+					}
+					
+					// Insert start and end time
+					i = (new Date().getTime()).toString(16);
+					obj.append((z = $(document.createElement('label'))));
+					z.attr('for', i);
+					z.html('Start: ');
+					obj.append((z = $(document.createElement('input'))));
+					z.attr('id', i);
+					z.attr('type', 'datetime');
+				
+					i = (new Date().getTime()).toString(16);
+					obj.append((z = $(document.createElement('label'))));
+					z.attr('for', i);
+					z.html(' End: ');
+					obj.append((z = $(document.createElement('input'))));
+					z.attr('id', i);
+					z.attr('type', 'datetime');
+
+					// Insert exclusion checkbox
+					i = (new Date().getTime()).toString(16);
+					obj.append((z = $(document.createElement('input'))));
+					z.attr('type', 'checkbox');
+					z.attr('id', i);
+					obj.append((z = $(document.createElement('label'))));
+					z.attr('for', i);
+					z.html('Exclusion');
+				}
+
+				elements = {
+					'time': {
+						'elements': {
+							repeat: {
+								'label': 'Repeat',
+								'draw': repeat,
+							},
+							time: {
+								'label': 'Time',
+								'draw': time,
+							},
+						}
+					}
+				};
+
+				ObjectBuilder(div, elements, { 'input': input});
+			})();
+		</script>
+	</body>
+</html>

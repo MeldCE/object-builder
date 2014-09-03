@@ -1,0 +1,33 @@
+div {
+	border: solid 1px #eee;
+	padding: 5px;
+}
+
+div.store {
+	background-color: #f9f9f9;
+	margin-bottom: 5px;
+}
+
+div.store > div {
+	border: none;
+	padding: 0px;
+}
+
+div.store div.item {
+	display: inline-block;
+	margin: 2px;
+}
+
+div.store div.item:hover {
+	cursor: pointer;
+	background-color: #fff;
+}
+
+div.pad {
+	background-color: #fff;
+}
+
+div.pad div.item {
+	margin: 2px;
+	background-color: #f9f9f9;
+}
