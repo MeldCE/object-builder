@@ -31,3 +31,7 @@ div.pad div.item {
 	margin: 2px;
 	background-color: #f9f9f9;
 }
+
+div.pad div.item.field {
+	display: inline-block;
+}
