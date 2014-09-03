@@ -23,11 +23,11 @@ To initiate, simply call `ObjectBuilder.create(div, elements, options)`
                parameters as given below.
 - `options` - See Options below.
 
-== Elements ==
+## Elements
 The elements object passed to the ObjectBuilder should contain element
 types containing elements to be used to build the object.
 
-=== Element Types ===
+### Element Types
 Each element type should be a unique object within the elements object and
 can contain the following properties:
 - `label: <string>` - Label to be used for the heading of the element types
@@ -37,7 +37,7 @@ can contain the following properties:
   when placed in the pad
 - `parse: <function>` - Function to be used to parse an element of this type
 
-=== Elements ===
+### Elements
 Each element should be a unique object within the element type object and
 must contain the following properties:
 - `label: <string>` - Label to be used for the heading of the element types
@@ -51,14 +51,14 @@ Each element can also contain the following properties:
   when placed in the pad.
 - `parse: <function>` - Function to be used to parse these elements.
 
-== Options == 
+## Options 
 The following options are available:
 - `input: <jQueryObject>` - Input element to place the parsed object JSON into
   every time the object is updated
 - `onchange: <function>` - Function that will be called every time the object
   is updated. It will be passed the ObjectBuilder id as an argument.
 
-== Example ==
+## Example
 ```
 <script language="JavaScript" type="text/javascript">
 	(function() {
