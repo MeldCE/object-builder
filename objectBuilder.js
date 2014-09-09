@@ -15,36 +15,35 @@ var ObjectBuilder = (function($) {
 		// Shift to remove include
 		a.shift();
 		return function () {
+			var args = a;
 			/**
 			 * Append the arguments from the function call to the arguments
 			 * given when rFunc was called.
 			 */
 			if (include) {
-				a = a.concat(Array.prototype.slice.call(arguments));
+				args = a.concat(Array.prototype.slice.call(arguments));
 			}
-			func.apply(context, a);
+			func.apply(context, args);
 		};
 	}
 
-	function sortableStop(id, e, ui) {
+	function sortableStop(id, event, ui) {
 		// Find the item
 		var i;
 		var type = ui.item.attr('data-type');
 		var element = ui.item.attr('data-element');
 		var elements = builders[id]['elements'][type];
 		var item = elements['elements'][element];
-		console.log(type);
-		console.log(element);
-		console.log(item);
+		
 		if (!ui.item.attr('data-drawn')) {
 			// Find draw function
 			var draw = (item['draw'] ? item['draw'] : (elements['draw'] ? elements['draw'] : null));
 			if (draw) {
 				var pads = draw(ui.item, id);
 				if (pads) {
-					console.log(pads);
+					//console.log(pads);
 					for (i in pads) {
-						console.log('making ' + i + 'sortable');
+						//console.log('making ' + i + 'sortable');
 						pads[i].sortable(builders[id].sortableOptions);
 					}
 				}
@@ -101,38 +100,38 @@ var ObjectBuilder = (function($) {
 	}
 
 	function connectPads(id) {
-		console.log('connecting pads');
+		//console.log('connecting pads');
 		if (builders[id]) {
-			console.log('valid builder');
+			//console.log('valid builder');
 			var i, storeTypes = {all: $()};
 
 			for (i in builders[id].pads) {
-				console.log('Checking pad');
+				//console.log('Checking pad');
 				// Check if is full
 				var max = (builders[id].pads[i].multiple ? builders[id].pads[i].multiple : 1);
-				console.log('Pad has a limit of ' + max);
+				//console.log('Pad has a limit of ' + max);
 				if (max !== true) {
-					console.log('Currently has ' + builders[id].pads[i].pad.children('.item').length);
+					//console.log('Currently has ' + builders[id].pads[i].pad.children('.item').length);
 					if (builders[id].pads[i].pad.children('.item').length >= max) {
-						console.log('Pad is full');
+						//console.log('Pad is full');
 						continue;
 					}
 				}
 				if (!builders[id].pads[i].types) {
-					console.log('Adding pad to all selector');
+					//console.log('Adding pad to all selector');
 					builders[id].pads[i].pad.attr('data-selector', 'all');
 					storeTypes.all = storeTypes.all.add(builders[id].pads[i].pad);
 				}
 			}
 
 			for (i in builders[id].stores) {
-				console.log('connecting store ' + i);
+				//console.log('connecting store ' + i);
 				// Add pads that accept all to the specific pads
 				if (!storeTypes[i]) {
-					console.log('no specifics, adding all');
+					//console.log('no specifics, adding all');
 					storeTypes[i] = storeTypes.all;
 				} else {
-					console.log('appending all');
+					//console.log('appending all');
 					storeTypes[i].add(storeTypes.all);
 				}
 
@@ -142,13 +141,14 @@ var ObjectBuilder = (function($) {
 			}
 		}
 	}
-
+	
 	return {
 		create: function(obj, elements, options) {
 			var z, pad = {};
 
 			id = (new Date().getTime()).toString(16);
-			
+		
+
 			builders[id] = {
 				obj: obj,
 				store: null, // Stores the store jQuery DOM container
@@ -223,9 +223,9 @@ var ObjectBuilder = (function($) {
 					var type = $(this).attr('data-type');
 					var element = $(this).attr('data-element');
 					if (elements[type] && elements[type].elements[element]) {
-						var parseObject 
-						if (parseObject = (elements[type].elements[element].parseObject ? elements[type].elements[element].parseObject : (elements[type].parseObject ? elements[type].parseObject : null))) {
-							obj.push(parseObject(type, element, $(this), id));
+						var parse; 
+						if (parse = (elements[type].elements[element].parse ? elements[type].elements[element].parse : (elements[type].parse ? elements[type].parse : null))) {
+							obj.push(parse($(this), id));
 						} else {
 							obj.push({
 								type: type,
@@ -248,7 +248,7 @@ var ObjectBuilder = (function($) {
 		createPad: function(id, obj, options) {
 			var pad = {};
 
-			console.log('Creating pad for ' + id);
+			//console.log('Creating pad for ' + id);
 
 			if (builders[id]) {
 				obj.append((pad.pad = $(document.createElement('div'))));
