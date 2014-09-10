@@ -88,6 +88,7 @@ var ObjectBuilder = (function($) {
 
 					z.append((y = $(document.createElement('div'))));
 					y.addClass('item');
+					y.addClass(e + '-' + i);
 					if (part = (item['className'] ? item['className'] : (type['className'] ? type['className'] : false))) {
 						y.addClass(part);
 					}
@@ -103,10 +104,11 @@ var ObjectBuilder = (function($) {
 		//console.log('connecting pads');
 		if (builders[id]) {
 			//console.log('valid builder');
-			var i, storeTypes = {all: $()};
-
+			var i, storeTypes = {all: $()}, specificStoreTypes = {};
+			
 			for (i in builders[id].pads) {
 				//console.log('Checking pad');
+				//console.log(builders[id].pads[i]);
 				// Check if is full
 				var max = (builders[id].pads[i].multiple ? builders[id].pads[i].multiple : 1);
 				//console.log('Pad has a limit of ' + max);
@@ -118,26 +120,62 @@ var ObjectBuilder = (function($) {
 					}
 				}
 				if (!builders[id].pads[i].types) {
-					//console.log('Adding pad to all selector');
-					builders[id].pads[i].pad.attr('data-selector', 'all');
+					//console.log('Adding pad to all');
 					storeTypes.all = storeTypes.all.add(builders[id].pads[i].pad);
+				} else {
+					//console.log('Have specific types: ' + builders[id].pads[i].types);
+					var t;
+					if (typeof(builders[id].pads[i].types) == 'string') {
+						builders[id].pads[i].types = [builders[id].pads[i].types];
+					}
+					for (t in builders[id].pads[i].types) {
+						var type = builders[id].pads[i].types[t];
+						if (type.indexOf('-') !== -1) {
+							//console.log('Have specific item: ' + type);
+							type = type.split('-');
+							if (builders[id].stores[type[0]]) {
+								//console.log('Found for ' + type[0]);
+								if (!specificStoreTypes[type[0]]) {
+									specificStoreTypes[type[0]] = {};
+								}
+								if (!specificStoreTypes[type[0]][type[1]]) {
+									specificStoreTypes[type[0]][type[1]] = $();
+								}
+								specificStoreTypes[type[0]][type[1]] = specificStoreTypes[type[0]][type[1]].add(builders[id].pads[i].pad);
+							}
+						} else {
+							if (builders[id].stores[type]) {
+								if (!storeTypes[type]) {
+									storeTypes[type] = $();
+								}
+								storeTypes[type] = storeTypes[type].add(builders[id].pads[i].pad);
+							}
+						}
+					}
 				}
 			}
 
-			for (i in builders[id].stores) {
+			for (t in builders[id].stores) {
 				//console.log('connecting store ' + i);
 				// Add pads that accept all to the specific pads
-				if (!storeTypes[i]) {
+				if (!storeTypes[t]) {
 					//console.log('no specifics, adding all');
-					storeTypes[i] = storeTypes.all;
+					storeTypes[t] = storeTypes.all;
 				} else {
 					//console.log('appending all');
-					storeTypes[i].add(storeTypes.all);
+					storeTypes[t] = storeTypes[t].add(storeTypes.all);
 				}
 
-				storeTypes[i].attr('data-' + i, 'connected');
-				builders[id].stores[i].find('.item').draggable('option', 'connectToSortable', storeTypes[i]);
-				builders[id].stores[i].find('.item').attr('data-added', 'added');
+				builders[id].stores[t].find('.item').draggable('option', 'connectToSortable', storeTypes[t]);
+
+				if (specificStoreTypes[t]) {
+					//console.log('Have specifics for type ' + t);
+					for (i in specificStoreTypes[t]) {
+						//console.log('Have specific item ' + i + ' ' + '[data-element=' + i + ']');
+						var specifics = storeTypes[t].add(specificStoreTypes[t][i]);
+						builders[id].stores[t].find('[data-element="' + i + '"]').draggable('option', 'connectToSortable', specifics)
+					}
+				}
 			}
 		}
 	}

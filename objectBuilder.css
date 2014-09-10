@@ -1,4 +1,7 @@
-div {
+div.store,
+div.store div,
+div.pad div,
+div.pad {
 	border: solid 1px #eee;
 	padding: 5px;
 }
@@ -34,4 +37,8 @@ div.pad div.item {
 
 div.pad div.item.field {
 	display: inline-block;
+}
+
+div.remove {
+	background-color: #fcc;
 }
