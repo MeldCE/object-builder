@@ -57,9 +57,7 @@ var ObjectBuilder = (function($) {
 		connectPads(id);
 
 		// Parse object
-		if (builders[id].input) {
-			builders[id].input.val(ObjectBuilder.getObjectJSON(id));
-		}
+		ObjectBuilder.reparse(id);
 
 		// Run onchange if we have one
 		if (builders[id].options.onchange) {
@@ -95,6 +93,50 @@ var ObjectBuilder = (function($) {
 					y.attr('data-type', e);
 					y.attr('data-element', i);
 					y.html((item['label'] ? item['label'] : i));
+				}
+			}
+		}
+	}
+
+	function createElement(id, obj, type, element, value) {
+		var y, item = builders[id].elements[type]['elements'][element];
+		var typeData = builders[id].elements[type];
+
+		obj.append((y = $(document.createElement('div'))));
+		y.addClass('item');
+		y.addClass(type + '-' + element);
+		if (part = (item['className'] ? item['className'] : (type['className'] ? type['className'] : false))) {
+			y.addClass(part);
+		}
+		y.attr('data-type', type);
+		y.attr('data-element', element);
+		
+		var draw = (item['draw'] ? item['draw'] : (typeData['draw'] ? typeData['draw'] : null));
+		if (value && draw) {
+			var pads = draw(y, id, value);
+			if (pads) {
+				//console.log(pads);
+				for (i in pads) {
+					//console.log('making ' + i + 'sortable');
+					pads[i].sortable(builders[id].sortableOptions);
+				}
+			}
+		} else {
+			y.html((item['label'] ? item['label'] : element));
+			y.attr('data-value', item['value']);
+		}
+	}
+
+	function populatePad(id, obj, value) {
+		console.log('populatePad running');
+		if (value && builders[id]) {
+			console.log(value);
+			var e;
+			for (e in value) {
+				if (value[e]._type && value[e]._element
+						&& builders[id].elements[value[e]._type]
+						&& builders[id].elements[value[e]._type]['elements'][value[e]._element]) {
+					createElement(id, obj, value[e]._type, value[e]._element, value[e]);
 				}
 			}
 		}
@@ -181,7 +223,7 @@ var ObjectBuilder = (function($) {
 	}
 	
 	return {
-		create: function(obj, elements, options) {
+		create: function(obj, elements, options, value) {
 			var z, pad = {};
 
 			id = (new Date().getTime()).toString(16);
@@ -225,27 +267,49 @@ var ObjectBuilder = (function($) {
 				builders[id].input = options.input;
 			}
 
+			if (value) {
+				try {
+					value = JSON.parse(value);
+				} catch(e) {
+					value = null;
+				}
+			}
+
 			// Create divs
 			obj.append((builders[id]['store'] = $(document.createElement('div'))));
 			builders[id]['store'].addClass('store');
 
-			builders[id]['pad'] = this.createPad(id, obj, builders[id].options);
-
 			// Populate the store
 			populateStore(id);
 
+			builders[id]['pad'] = this.createPad(id, obj, builders[id].options, value);
+
+			// Make the items in the store draggable
 			builders[id]['store'].find('.item').draggable({
 				appendTo: obj,
 				helper: 'clone',
-				connectToSortable: builders[id]['pad']
 			});
+
+			// Populate the pad
+			//populatePad(id, builders[id]['pad'], value);
 
 			// Connect pads
 			connectPads(id);
 
+			// Update value
+			if (value && builders[id].input) {
+				ObjectBuilder.reparse(id);
+			}
+
 			return id;
 		},
-		
+	
+		reparse: function(id) {
+			if (builders[id] && builders[id].input) {
+				builders[id].input.val(ObjectBuilder.getObjectJSON(id));
+			}
+		},
+
 		parseObject: function(id) {
 			if (builders[id]) {
 				return ObjectBuilder.parsePadObject(id, builders[id]['pad']);
@@ -263,7 +327,11 @@ var ObjectBuilder = (function($) {
 					if (elements[type] && elements[type].elements[element]) {
 						var parse; 
 						if (parse = (elements[type].elements[element].parse ? elements[type].elements[element].parse : (elements[type].parse ? elements[type].parse : null))) {
-							obj.push(parse($(this), id));
+							var parsed = parse($(this), id);
+							// Add type and element to object
+							parsed['_type'] = type;
+							parsed['_element'] = element
+							obj.push(parsed);
 						} else {
 							obj.push({
 								type: type,
@@ -283,7 +351,7 @@ var ObjectBuilder = (function($) {
 			}
 		},
 		
-		createPad: function(id, obj, options) {
+		createPad: function(id, obj, options, value) {
 			var pad = {};
 
 			//console.log('Creating pad for ' + id);
@@ -292,13 +360,17 @@ var ObjectBuilder = (function($) {
 				obj.append((pad.pad = $(document.createElement('div'))));
 				pad.pad.addClass('pad');
 				pad.pad.sortable(builders[id].sortableOptions);
-				if (options.types) {
+				if (options && options.types) {
 					pad.types = options.types;
 				}
-				if (options.multiple) {
+				if (options && options.multiple) {
 					pad.multiple = options.multiple;
 				}
 				builders[id].pads.push(pad);
+				
+				if (value) {
+					populatePad(id, pad.pad, value);
+				}
 
 				return pad.pad;
 			}
