@@ -1,6 +1,6 @@
 div.store,
-div.store div,
-div.pad div,
+div.store div.item,
+div.pad div.item,
 div.pad {
 	border: solid 1px #eee;
 	padding: 5px;
