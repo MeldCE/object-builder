@@ -98,35 +98,6 @@ var ObjectBuilder = (function($) {
 		}
 	}
 
-	function createElement(id, obj, type, element, value) {
-		var y, item = builders[id].elements[type]['elements'][element];
-		var typeData = builders[id].elements[type];
-
-		obj.append((y = $(document.createElement('div'))));
-		y.addClass('item');
-		y.addClass(type + '-' + element);
-		if (part = (item['className'] ? item['className'] : (type['className'] ? type['className'] : false))) {
-			y.addClass(part);
-		}
-		y.attr('data-type', type);
-		y.attr('data-element', element);
-		
-		var draw = (item['draw'] ? item['draw'] : (typeData['draw'] ? typeData['draw'] : null));
-		if (value && draw) {
-			var pads = draw(y, id, value);
-			if (pads) {
-				//console.log(pads);
-				for (i in pads) {
-					//console.log('making ' + i + 'sortable');
-					pads[i].sortable(builders[id].sortableOptions);
-				}
-			}
-		} else {
-			y.html((item['label'] ? item['label'] : element));
-			y.attr('data-value', item['value']);
-		}
-	}
-
 	function populatePad(id, obj, value) {
 		console.log('populatePad running');
 		if (value && builders[id]) {
@@ -136,7 +107,7 @@ var ObjectBuilder = (function($) {
 				if (value[e]._type && value[e]._element
 						&& builders[id].elements[value[e]._type]
 						&& builders[id].elements[value[e]._type]['elements'][value[e]._element]) {
-					createElement(id, obj, value[e]._type, value[e]._element, value[e]);
+					ObjectBuilder.createElement(id, obj, value[e]._type, value[e]._element, value[e]);
 				}
 			}
 		}
@@ -228,7 +199,6 @@ var ObjectBuilder = (function($) {
 
 			id = (new Date().getTime()).toString(16);
 		
-
 			builders[id] = {
 				obj: obj,
 				store: null, // Stores the store jQuery DOM container
@@ -263,16 +233,16 @@ var ObjectBuilder = (function($) {
 				}
 			};
 
-			if (options.input) {
-				builders[id].input = options.input;
+			if (options.parse) {
+				builders[id].parseFn = options.parse;
 			}
 
-			if (value) {
-				try {
-					value = JSON.parse(value);
-				} catch(e) {
-					value = null;
-				}
+			if (options.populate) {
+				builders[id].populateFn = options.populate;
+			}
+
+			if (options.input) {
+				builders[id].input = options.input;
 			}
 
 			// Create divs
@@ -316,18 +286,29 @@ var ObjectBuilder = (function($) {
 			}
 		},
 
+		iterateObjects: function(pad, func) {
+			pad.children('[data-element]').each(function() {
+				var type = $(this).attr('data-type');
+				var element = $(this).attr('data-element');
+				
+				func($(this), type, element);
+			});
+		},
+
 		parsePadObject: function(id, pad) {
 			if (builders[id] && pad) {
+				if (builders[id].parseFn) {
+					return builders[id].parseFn(id, pad);
+				}
+
 				var e, obj = [], elements = builders[id].elements;
 
-				pad.children('[data-element]').each(function() {
+				this.iterateObjects(pad, function(el, type, element) {
 					// Check for a getObject function
-					var type = $(this).attr('data-type');
-					var element = $(this).attr('data-element');
 					if (elements[type] && elements[type].elements[element]) {
 						var parse; 
 						if (parse = (elements[type].elements[element].parse ? elements[type].elements[element].parse : (elements[type].parse ? elements[type].parse : null))) {
-							var parsed = parse($(this), id);
+							var parsed = parse(el, id);
 							// Add type and element to object
 							parsed['_type'] = type;
 							parsed['_element'] = element
@@ -369,11 +350,44 @@ var ObjectBuilder = (function($) {
 				builders[id].pads.push(pad);
 				
 				if (value) {
-					populatePad(id, pad.pad, value);
+					if (builders[id].populateFn) {
+						builders[id].populateFn(id, pad.pad, value);
+					} else {
+						populatePad(id, pad.pad, value);
+					}
 				}
 
 				return pad.pad;
 			}
 		},
+
+		createElement: function(id, obj, type, element, value) {
+			var y, item = builders[id].elements[type]['elements'][element];
+			var typeData = builders[id].elements[type];
+
+			obj.append((y = $(document.createElement('div'))));
+			y.addClass('item');
+			y.addClass(type + '-' + element);
+			if (part = (item['className'] ? item['className'] : (type['className'] ? type['className'] : false))) {
+				y.addClass(part);
+			}
+			y.attr('data-type', type);
+			y.attr('data-element', element);
+			
+			var draw = (item['draw'] ? item['draw'] : (typeData['draw'] ? typeData['draw'] : null));
+			if (value && draw) {
+				var pads = draw(y, id, value);
+				if (pads) {
+					//console.log(pads);
+					for (i in pads) {
+						//console.log('making ' + i + 'sortable');
+						pads[i].sortable(builders[id].sortableOptions);
+					}
+				}
+			} else {
+				y.html((item['label'] ? item['label'] : element));
+				y.attr('data-value', item['value']);
+			}
+		}
 	};
 })(jQuery);
